@@ -16,3 +16,4 @@ def showtensor(a):
     inp = std.reshape([1, 1, 3]) * inp + mean.reshape([1, 1, 3])
     inp *= 255
     showarray(inp)
+    clear_output(wait=True)

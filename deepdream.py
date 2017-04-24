@@ -4,6 +4,9 @@ from util import showtensor
 import scipy.ndimage as nd
 from torch.autograd import Variable
 
+def objective_L2(dst, guide_features):
+    return dst.data
+
 def make_step(X, model, **kwargs):
     #     X = X.copy()
 
@@ -15,7 +18,9 @@ def make_step(X, model, **kwargs):
     num_iterations = kwargs.pop('num_iterations', 100)
     show_every = kwargs.pop('show_every', 25)
     end_layer = kwargs.pop('end_layer', 3)
-    print(end_layer)
+    object = kwargs.pop('objective', objective_L2)
+    guide_features = kwargs.pop('guide_features', None)
+    # print(end_layer)
     for t in range(num_iterations):
         ox, oy = np.random.randint(-max_jitter, max_jitter + 1, 2)
         X = np.roll(np.roll(X, ox, -1), oy, -2)
@@ -25,7 +30,8 @@ def make_step(X, model, **kwargs):
         X_Variable = Variable(X_tensor.cuda(), requires_grad=True)
 
         act_value = model.forward(X_Variable, end_layer)
-        act_value.backward(act_value.data)
+        diff_out = object(act_value, guide_features)
+        act_value.backward(diff_out)
 
         learning_rate_ = learning_rate / np.abs(X_Variable.grad.data.cpu().numpy()).mean()
 
